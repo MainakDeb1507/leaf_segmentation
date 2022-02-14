@@ -109,3 +109,33 @@ def make_divisible(v, divisor, min_value=None):
     if new_v < 0.9 * v:
         new_v += divisor
     return new_v
+
+def MobileNetv2(inputs, alpha=1.0):
+
+    first_filters = _make_divisible(32 * alpha, 8)
+    x = sep_conv_block(inputs, 24, kernel = (3, 3))
+    x = sep_conv_block(x, 24, kernel = (3, 3))
+    x224 = x
+    
+    x = sep_conv_block(x, first_filters, kernel = (3, 3), strides = 2)
+    x112 = x
+
+    x = inverted_residual_block(x, 16, (3, 3), t=1, alpha=alpha, strides=1, n=1)
+    x = inverted_residual_block(x, 24, (3, 3), t=6, alpha=alpha, strides=2, n=2)
+    x56 = x
+    
+    x = inverted_residual_block(x, 32, (3, 3), t=6, alpha=alpha, strides=2, n=3)
+    x28 = x
+    
+    x = inverted_residual_block(x, 64, (3, 3), t=6, alpha=alpha, strides=2, n=4)
+    x14 = x
+    
+    x = inverted_residual_block(x, 96, (3, 3), t=6, alpha=alpha, strides=1, n=3)
+    x = inverted_residual_block(x, 160, (3, 3), t=6, alpha=alpha, strides=2, n=3)
+    x7 = x
+    
+    x = inverted_residual_block(x, 320, (3, 3), t=6, alpha=alpha, strides=1, n=1)
+
+    x = atrous_conv(x, filters = 128, strides = 1, rate = (6 ,12 ,18), pad = (6 ,12 ,18))
+    
+    return (x, x7, x14, x28, x56, x112, x224)
